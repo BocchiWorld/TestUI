@@ -1,126 +1,75 @@
--- UI Library: Executor-Compatible Version
-local plr = game:GetService('Players').LocalPlayer
-local runS = game:GetService('RunService')
-local uis = game:GetService("UserInputService")
-
 local UILib = {}
 
--- Ensure no duplicate UIs exist
-for i,v in next,game:GetService("CoreGui"):GetChildren() do
-    if v.Name == "ScriptedUI" then
-        v:Destroy()
+-- Create a new UI window
+function UILib:CreateWindow(title, size)
+    local ScreenGui = Instance.new("ScreenGui")
+    local Frame = Instance.new("Frame")
+    local Title = Instance.new("TextLabel")
+
+    -- Check if executor supports `gethui()` (places UI in the hidden GUI container)
+    if gethui then
+        ScreenGui.Parent = gethui()
+    else
+        ScreenGui.Parent = game:GetService("CoreGui") -- Some executors may not support this
     end
+
+    -- Style the window
+    ScreenGui.Name = "CustomUI"
+    Frame.Parent = ScreenGui
+    Frame.Size = UDim2.new(0, size.X, 0, size.Y)
+    Frame.Position = UDim2.new(0.5, -size.X/2, 0.5, -size.Y/2)
+    Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Frame.BorderSizePixel = 2
+    Frame.Draggable = true
+    Frame.Active = true
+
+    -- Title bar
+    Title.Parent = Frame
+    Title.Size = UDim2.new(1, 0, 0, 30)
+    Title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    Title.Text = title
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.Font = Enum.Font.SourceSansBold
+    Title.TextSize = 20
+
+    return Frame -- Return the main frame for adding buttons and labels
 end
 
-local baseui = Instance.new("ScreenGui")
-if not runS:IsStudio() then
-    if syn then
-        syn.protect_gui(baseui)
-    end
-    baseui.Parent = game:GetService('CoreGui')
-else
-    baseui.Parent = plr.PlayerGui
-end
-baseui.Name = "ScriptedUI"
-baseui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+-- Create a button
+function UILib:CreateButton(parent, text, position, callback)
+    local Button = Instance.new("TextButton")
 
--- Function to create a custom Frame
-function UILib.CreateFrame(parent, name, position, size, color, cornerRadius)
-    local frame = Instance.new("Frame")
-    frame.Name = name
-    frame.Size = UDim2.new(size.X.Scale, size.X.Offset, size.Y.Scale, size.Y.Offset)
-    frame.Position = UDim2.new(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset)
-    frame.BackgroundColor3 = color or Color3.fromRGB(50, 50, 50)
-    frame.Parent = parent
-    
-    if cornerRadius then
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, cornerRadius)
-        corner.Parent = frame
-    end
-    
-    return frame
+    Button.Parent = parent
+    Button.Size = UDim2.new(0, 100, 0, 30)
+    Button.Position = position
+    Button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    Button.Text = text
+    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Button.Font = Enum.Font.SourceSans
+    Button.TextSize = 18
+
+    -- Connect function
+    Button.MouseButton1Click:Connect(function()
+        pcall(callback) -- Run function safely
+    end)
+
+    return Button
 end
 
--- Function to create a custom Title Label inside a Frame
-function UILib.CreateTitle(parent, name, position, size, text, textSize, textColor)
-    local title = Instance.new("TextLabel")
-    title.Name = name
-    title.Size = UDim2.new(size.X.Scale, size.X.Offset, size.Y.Scale, size.Y.Offset)
-    title.Position = UDim2.new(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset)
-    title.BackgroundTransparency = 1
-    title.Text = text
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = textSize or 24
-    title.TextColor3 = textColor or Color3.fromRGB(255, 255, 255)
-    title.Parent = parent
-    return title
-end
+-- Create a label
+function UILib:CreateLabel(parent, text, position)
+    local Label = Instance.new("TextLabel")
 
--- Function to create a custom Button inside a Frame
-function UILib.CreateButton(parent, name, position, size, text, textSize, textColor, backgroundColor, callback)
-    local button = Instance.new("TextButton")
-    button.Name = name
-    button.Size = UDim2.new(size.X.Scale, size.X.Offset, size.Y.Scale, size.Y.Offset)
-    button.Position = UDim2.new(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset)
-    button.Text = text
-    button.Font = Enum.Font.GothamBold
-    button.TextSize = textSize or 18
-    button.TextColor3 = textColor or Color3.fromRGB(255, 255, 255)
-    button.BackgroundColor3 = backgroundColor or Color3.fromRGB(100, 100, 100)
-    button.Parent = parent
-    
-    local corner = Instance.new("UICorner")
-    corner.Parent = button
-    
-    if callback then
-        button.MouseButton1Click:Connect(callback)
-    end
-    
-    return button
-end
+    Label.Parent = parent
+    Label.Size = UDim2.new(0, 150, 0, 30)
+    Label.Position = position
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Label.Font = Enum.Font.SourceSans
+    Label.TextSize = 18
 
--- Function to create a custom ImageLabel inside a Frame
-function UILib.CreateImageLabel(parent, name, position, size, imageId, backgroundTransparency)
-    local imageLabel = Instance.new("ImageLabel")
-    imageLabel.Name = name
-    imageLabel.Size = UDim2.new(size.X.Scale, size.X.Offset, size.Y.Scale, size.Y.Offset)
-    imageLabel.Position = UDim2.new(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset)
-    imageLabel.BackgroundTransparency = backgroundTransparency or 1
-    imageLabel.Image = imageId
-    imageLabel.Parent = parent
-    return imageLabel
+    return Label
 end
-
--- Function to create a custom Scrolling Frame with UI Grid Layout
-function UILib.CreateScrollingFrame(parent, name, position, size)
-    local scrollingFrame = Instance.new("ScrollingFrame")
-    scrollingFrame.Name = name
-    scrollingFrame.Size = UDim2.new(size.X.Scale, size.X.Offset, size.Y.Scale, size.Y.Offset)
-    scrollingFrame.Position = UDim2.new(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset)
-    scrollingFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    scrollingFrame.ScrollBarThickness = 6
-    scrollingFrame.Parent = parent
-    
-    local gridLayout = Instance.new("UIGridLayout")
-    gridLayout.Parent = scrollingFrame
-    gridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    gridLayout.CellPadding = UDim2.new(0, 5, 0, 5)
-    gridLayout.CellSize = UDim2.new(0.25, 100, 0.01, 50)
-    
-    return scrollingFrame
-end
-
--- Toggle UI Visibility
-function UILib.ToggleUI()
-    baseui.Enabled = not baseui.Enabled
-end
-
-uis.InputBegan:Connect(function(key, gp)
-    if gp then return end
-    if key.KeyCode == Enum.KeyCode.LeftControl then
-        UILib.ToggleUI()
-    end
-end)
 
 return UILib
